@@ -4,6 +4,8 @@ This program can be used to monitor the environment with a connected microphone.
 The user interface is realized with the Telegram API and allows notifications
 when the sound amplitude is too high.
 
+![Screenshot](./screenshot.png)
+
 
 ## Setup
 
