@@ -1,6 +1,5 @@
 from collections import deque
 from datetime import datetime, timedelta
-from functools import partial
 from io import BytesIO
 import logging
 from queue import Queue
@@ -121,7 +120,7 @@ class TelegramUI:
             opus = check_output(['opusenc', wav_file, '-'])
             stream = BytesIO(opus)
             stream.seek(0)
-            self._send(self.bot.sendVoice, stream)
+            self._send('voice', stream)
         else:
             self._reply('No audio recorded yet')
 
@@ -141,7 +140,7 @@ class TelegramUI:
         stream = BytesIO()
         fig.savefig(stream, bbox_inches='tight', pad_inches=0)
         stream.seek(0)
-        self._send(self.bot.sendPhoto, stream)
+        self._send('photo', stream)
 
     def _handle_ping(self, text):
         self._reply('\N{Waving Hand Sign}')
@@ -166,17 +165,17 @@ class TelegramUI:
     def _reply(self, msg_text):
         self.send_message(msg_text)
 
-    def _send(self, send_func, data):
-        logging.debug(f'sending message: {data} via {send_func}')
+    def _send(self, media_type, *args, **kwargs):
+        logging.debug(f'sending message: {args} {kwargs} as {media_type}')
         try:
-            send_func(self.chat_id, data)
+            getattr(self.bot, f'send{media_type.capitalize()}')(self.chat_id, *args, **kwargs)
         except ProtocolError:
-            time.sleep(0.5)
+            time.sleep(0.1)
             self.bot = telepot.Bot(config.ui.bot_token)
-            self._send(send_func, data)
+            self._send(media_type, *args, **kwargs)
 
     def send_message(self, msg_text):
-        self._send(partial(self.bot.sendMessage, parse_mode='markdown'), msg_text)
+        self._send('message', msg_text, parse_mode='markdown')
 
 
 def handle_errors(ui):
